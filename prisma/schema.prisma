@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  role      String    @default("viewer")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  artworks  Artwork[]
+  favorites Favorite[]
+  comments  Comment[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  artworks    Artwork[]
+
+  @@map("categories")
+}
+
+model Artwork {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  imageUrl    String     @map("image_url")
+  categoryId  Int        @map("category_id")
+  userId      Int        @map("user_id")
+  price       Decimal    @db.Decimal(10, 2)
+  stock       Int        @default(1)
+  saleStatus  String     @default("available") @map("sale_status")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites   Favorite[]
+  comments    Comment[]
+
+  @@map("artworks")
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  artworkId Int      @map("artwork_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+
+  @@map("favorites")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  artworkId Int      @map("artwork_id")
+  userId    Int      @map("user_id")
+  comment   String
+  createdAt DateTime @default(now()) @map("created_at")
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
